@@ -17,9 +17,13 @@
           <div>
             <label>类别</label>
             <div class="input-item">
-              <el-select v-model="listQuery.category" placeholder="选择类别" clearable>
+              <el-select
+                v-model="listQuery.category"
+                placeholder="选择类别"
+                clearable
+              >
                 <el-option
-                  v-for="(item,index) in categorys"
+                  v-for="(item, index) in categoryOptions"
                   :key="index"
                   :label="item.name"
                   :value="item.name"
@@ -36,6 +40,7 @@
             <label>时间</label>
             <div class="input-item">
               <el-date-picker
+                style="width: 100%"
                 v-model="listQuery.date"
                 type="daterange"
                 range-separator="至"
@@ -49,15 +54,11 @@
           </div>
         </div>
 
-        <el-button
-          v-waves
-          class="filter-item"
-          type="primary"
-          icon="el-icon-search"
-          @click="handleReset()"
-        >
-          重置
-        </el-button>
+        <div class="reset">
+          <el-button icon="el-icon-refresh" type="primary" @click="handleReset"
+            >重置</el-button
+          >
+        </div>
       </div>
 
       <div class="tags">
@@ -75,15 +76,17 @@
             :value="item.value"
           />
         </el-drag-select>
-        <el-button
-          v-waves
-          class="filter-item"
-          type="primary"
-          icon="el-icon-search"
-          @click="handleSearch"
-        >
-          搜索
-        </el-button>
+        <div class="search">
+          <el-button
+            v-waves
+            class="filter-item"
+            type="primary"
+            icon="el-icon-search"
+            @click="handleSearch"
+          >
+            搜索
+          </el-button>
+        </div>
       </div>
     </div>
 
@@ -193,7 +196,10 @@ export default {
   },
   data() {
     return {
-      categorys: [{id:'1', name: "java" }, {id:'2', name: "go" }],
+      categoryOptions: [
+        { id: "1", name: "java" },
+        { id: "2", name: "go" },
+      ],
       tableKey: "0",
       listLoading: false,
       listData: [
@@ -251,9 +257,9 @@ export default {
     //清空筛选项
     handleReset() {
       this.listQuery.date = null;
-      this.listQuery.title = '';
-      this.listQuery.category=''
-      this.listQuery.tags = ''
+      this.listQuery.title = "";
+      this.listQuery.category = "";
+      this.listQuery.tags = "";
     },
     //搜索按钮
     handleSearch() {
@@ -296,6 +302,14 @@ export default {
     flex-direction: column;
     justify-content: space-around;
 
+    .reset,
+    .search {
+      width: 6.5%;
+      .el-button {
+        width: 100%;
+      }
+    }
+
     .common {
       margin-top: 10px;
       margin-bottom: 20px;
@@ -304,13 +318,13 @@ export default {
       justify-content: space-between;
 
       .input-items {
-        width: 86.8%;
+        width: 89.5%;
         display: flex;
         flex-direction: row;
         justify-content: space-between;
 
-        div {
-          width: 300px;
+        > div {
+          width: 30%;
         }
 
         label {
@@ -329,12 +343,15 @@ export default {
           line-height: 40px;
           position: relative;
           font-size: 14px;
+          width: 91%;
 
-          .el-input {
+          .el-input,
+          .el-select,
+          .el-date-picker {
             position: relative;
             font-size: 14px;
             display: inline-block;
-            width: 100%;
+            width: 100% !important;
             line-height: 40px;
           }
         }

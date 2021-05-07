@@ -63,15 +63,15 @@ export const constantRoutes = [{
         redirect: '/article/menu1',
         name: 'Article',
         meta: {
-            title: '文章管理',
-            icon: 'el-icon-copy-document'
+            title: '博客管理',
+            icon: 'documentation'
         },
         children: [{
                 path: 'list',
                 component: () =>
                     import ('@/views/article/list/index'), // Parent router-view
                 name: 'list',
-                meta: { title: '文章列表' },
+                meta: { title: '文章列表', icon: 'list' },
 
             },
             {
@@ -79,7 +79,14 @@ export const constantRoutes = [{
                 component: () =>
                     import ('@/views/article/edit/index'),
                 name: 'edit',
-                meta: { title: '文章编辑' }
+                meta: { title: '文章编辑', icon: 'edit' }
+            },
+            {
+                path: 'tags',
+                component: () =>
+                    import ('@/views/article/tags/index'),
+                name: 'edit',
+                meta: { title: '分类管理' }
             }
         ]
     },
