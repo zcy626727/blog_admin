@@ -296,7 +296,7 @@ export default {
 
 <style lang="scss" scoped>
 .container {
-  padding: 20px;
+  margin: 20px;
   .filter {
     display: flex;
     flex-direction: column;
@@ -311,7 +311,7 @@ export default {
     }
 
     .common {
-      margin-top: 10px;
+
       margin-bottom: 20px;
       display: flex;
       flex-direction: row;

@@ -24,7 +24,7 @@
               v-for="(item, index) in categoryOptions"
               :key="index"
               :label="item.name"
-              :value="item.name"
+              :value="item.id"
             >
               <span style="float: left">{{ item.name }}</span>
               <span style="float: right; color: #8492a6; font-size: 13px">{{
@@ -40,7 +40,7 @@
       <label>标签</label>
       <div class="select">
         <el-select
-          v-model="articleInfo.tagsValue"
+          v-model="articleInfoCategory"
           multiple
           filterable
           allow-create
@@ -49,29 +49,49 @@
         >
           <el-option
             v-for="item in tagsOptions"
-            :key="item.value"
-            :label="item.label"
-            :value="item.value"
+            :key="item.id"
+            :label="item.name"
+            :value="item.id"
           >
           </el-option>
         </el-select>
       </div>
     </div>
 
+    <div class="des">
+      <label>描述</label>
+      <div class="des-input">
+        <el-input
+          type="textarea"
+          maxlength="100"
+          :autosize="{ minRows: 2 }"
+          placeholder="描述内容"
+          show-word-limit
+          v-model="articleInfo.describe"
+        >
+        </el-input>
+      </div>
+    </div>
+
     <div class="markdown">
       <mavon-editor
+        :autofocus="false"
         v-model="articleInfo.markdownValue"
         :toolbars="toolbars"
+        @imgAdd="markdownImgAdd"
+        @imgDel="markdownImgDel"
       ></mavon-editor>
     </div>
 
     <div class="btns">
+      <el-button ref="saveBtn" @click="handleSaveBtn">{{
+        status.saveText
+      }}</el-button>
       <el-button ref="uploadBtn" @click="handleUpdateBtn">
-        上传封面
+        {{ status.uploadText }}
       </el-button>
-      <el-button ref="saveBtn" @click="handleSaveBtn">保存</el-button>
       <el-button ref="publishBtn" @click="handlePublishBtn($event)">
-        发布
+        {{ status.publishText }}
       </el-button>
     </div>
 
@@ -97,7 +117,12 @@
       </div>
       <template #footer>
         <span class="dialog-footer">
-          <el-button ref="confirmBtn" type="primary" @click="dialogVisible = false">点击上传</el-button>
+          <el-button
+            ref="confirmBtn"
+            type="primary"
+            @click="dialogVisible = false"
+            >点击上传</el-button
+          >
         </span>
       </template>
     </el-dialog>
@@ -110,6 +135,11 @@ export default {
   data() {
     return {
       dialogUploadVisible: false,
+      status: {
+        saveText: "保存",
+        uploadText: "上传封面",
+        publishText: "发布",
+      },
       fileList: [
         // {
         //   name: "food.jpeg",
@@ -119,9 +149,12 @@ export default {
       ],
       articleInfo: {
         markdownValue: "",
-        tagsValue: [],
+        tagsValue: [
+          
+        ],
         category: "",
         title: "",
+        describe: "",
       },
       categoryOptions: [
         { id: "1", name: "java" },
@@ -129,16 +162,16 @@ export default {
       ],
       tagsOptions: [
         {
-          value: "HTML",
-          label: "HTML",
+          name: "HTML",
+          id: "id1",
         },
         {
-          value: "CSS",
-          label: "CSS",
+          name: "CSS",
+          id: "id2",
         },
         {
-          value: "JavaScript",
-          label: "JavaScript",
+          name: "JavaScript",
+          id: "id3",
         },
       ],
       toolbars: {
@@ -181,6 +214,21 @@ export default {
   methods: {
     test() {
       alert(this.articleInfo.markdownValue);
+    },
+    getOptionByid(id) {
+      for (var i in this.tagsOptions) {
+        var item = this.tagsOptions[i];
+        if (item.id == id) {
+          return i;
+        }
+      }
+      return null;
+    },
+    markdownImgAdd(pos, $file) {
+      alert("markdown图片添加" + pos);
+    },
+    markdownImgDel(pos, $file) {
+      alert("markdown图片删除" + pos);
     },
     handleUploadRemove(file, fileList) {
       debugger;
@@ -226,38 +274,76 @@ export default {
       return isJPG && isLt2M;
     },
     handleUpdateBtn(event) {
-      this.dialogUploadVisible = true
+      this.dialogUploadVisible = true;
       // var target =this.$refs.uploadBtn.$el;
       // target.classList.add("el-button--success");
       // target.classList.remove("el-button--default");
       // target.innerHTML = "更换封面";
     },
-    handleConfirmBtn(){
+    handleConfirmBtn() {
       // this.$refs.upload.submit();
       //上传成功代码
-      var target =this.$refs.uploadBtn.$el;
+      var target = this.$refs.uploadBtn.$el;
       target.classList.add("el-button--success");
       target.classList.remove("el-button--default");
-      target.innerHTML = "更换封面";
-      this.dialogUploadVisible = false
-
+      this.status.uploadText = "更换封面";
+      this.dialogUploadVisible = false;
     },
     handleSaveBtn(event) {
       //保存上传的图片
-      
+      debugger;
+      console.log(this.articleInfo);
+
       var target = this.$refs.saveBtn.$el;
-      
+
       target.classList.add("el-button--success");
       target.classList.remove("el-button--default");
-      target.innerHTML = "重新保存";
+      this.status.saveText = "更新";
     },
     handlePublishBtn(event) {
-      alert(event);
       var target = this.$refs.publishBtn.$el;
-      
-      target.classList.add("el-button--success");
-      target.classList.remove("el-button--default");
-      target.innerHTML = "已发布";
+      debugger;
+
+      if (this.status.publishText == "已发布") {
+        //发布->草稿
+        target.classList.add("el-button--default");
+        target.classList.remove("el-button--success");
+        this.status.publishText = "发布";
+      } else {
+        //草稿->发布
+        target.classList.add("el-button--success");
+        target.classList.remove("el-button--default");
+        this.status.publishText = "已发布";
+      }
+    },
+  },
+  computed: {
+    articleInfoCategory: {
+      get() {
+        var temp = [];
+        for (var i in this.articleInfo.tagsValue) {
+          temp.push(this.articleInfo.tagsValue[i]);
+        }
+        return temp;
+      },
+      set(tagIds) {
+        debugger;
+        var temp = [];
+        for (var index in tagIds) {
+          var option = this.getOptionByid(tagIds[index]);
+          if (option == null) {
+            //没有此id
+            temp.push("+" + tagIds[index]);
+            this.tagsOptions.push({
+              id: "+" + tagIds[index],
+              name: tagIds[index],
+            });
+          } else {
+            temp.push(tagIds[index]);
+          }
+        }
+        this.articleInfo.tagsValue = temp;
+      },
     },
   },
 };
@@ -316,7 +402,7 @@ export default {
   }
 
   .tags {
-    margin-bottom: 30px;
+    margin-bottom: 20px;
     label {
       text-align: right;
       vertical-align: middle;
@@ -333,7 +419,7 @@ export default {
       line-height: 40px;
       position: relative;
       font-size: 14px;
-      width: 100%;
+      width: 99.5%;
     }
 
     .el-select {
@@ -342,6 +428,28 @@ export default {
       display: inline-block;
       width: 97.5%;
       line-height: 40px;
+    }
+  }
+
+  .des {
+    margin-bottom: 20px;
+
+    label {
+      text-align: right;
+      vertical-align: middle;
+      float: left;
+      font-size: 14px;
+      color: #606266;
+      line-height: 40px;
+      padding: 0 12px 0 0;
+      box-sizing: border-box !important;
+    }
+
+    .des-input {
+      margin-left: 40px;
+      line-height: 40px;
+      position: relative;
+      font-size: 14px;
     }
   }
 

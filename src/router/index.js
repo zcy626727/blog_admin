@@ -84,9 +84,9 @@ export const constantRoutes = [{
             {
                 path: 'tags',
                 component: () =>
-                    import ('@/views/article/tags/index'),
+                    import ('@/views/article/category/index'),
                 name: 'edit',
-                meta: { title: '分类管理' }
+                meta: { title: '分类管理', icon: 'tab' }
             }
         ]
     },
