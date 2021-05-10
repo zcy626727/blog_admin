@@ -20,6 +20,7 @@ router.beforeEach(async(to, from, next) => {
     // determine whether the user has logged in
     const hasToken = getToken()
 
+    debugger
     if (hasToken) {
         if (to.path === '/login') {
             // if is logged in, redirect to the home page
@@ -31,12 +32,12 @@ router.beforeEach(async(to, from, next) => {
                 next()
             } else {
                 try {
-                    // get user info
+                    // 获取用户信息
                     await store.dispatch('user/getInfo')
 
                     next()
                 } catch (error) {
-                    // remove token and go to login page to re-login
+                    // 移除token并转发到登录页面
                     await store.dispatch('user/resetToken')
                     Message.error(error || 'Has Error')
                     next(`/login?redirect=${to.path}`)
