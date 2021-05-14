@@ -18,7 +18,7 @@
             <label>类别</label>
             <div class="input-item">
               <el-select
-                v-model="listQuery.category"
+                v-model="listQuery.categoryId"
                 placeholder="选择类别"
                 clearable
               >
@@ -26,7 +26,7 @@
                   v-for="(item, index) in categoryOptions"
                   :key="index"
                   :label="item.name"
-                  :value="item.name"
+                  :value="item.id"
                 >
                   <span style="float: left">{{ item.name }}</span>
                   <span style="float: right; color: #8492a6; font-size: 13px">{{
@@ -37,17 +37,18 @@
             </div>
           </div>
           <div>
-            <label>时间</label>
-            <div class="input-item">
+            <label>创建时间</label>
+            <div class="input-item" style="margin-left: 70px">
               <el-date-picker
                 style="width: 100%"
-                v-model="listQuery.date"
+                v-model="listQuery.createTime"
                 type="daterange"
                 range-separator="至"
                 start-placeholder="开始日期"
                 end-placeholder="结束日期"
                 :change="dateChange"
-                format="yyyy-MM-DD"
+                format="yyyy-MM-dd"
+                value-format="yyyy-MM-dd"
               >
               </el-date-picker>
             </div>
@@ -61,21 +62,26 @@
         </div>
       </div>
 
-      <div class="tags">
-        <el-drag-select
-          class="drag-select"
-          v-model="listQuery.tags"
-          style="width: 500px"
-          multiple
-          placeholder="请选择"
-        >
-          <el-option
-            v-for="item in ElDragSelectOptions"
-            :key="item.value"
-            :label="item.label"
-            :value="item.value"
-          />
-        </el-drag-select>
+      <div class="tags-search">
+        <div class="tags">
+          <label>标签</label>
+          <div class="select">
+            <el-drag-select
+              class="drag-select"
+              v-model="listQuery.tags"
+              style="width: 500px"
+              multiple
+              placeholder="请选择"
+            >
+              <el-option
+                v-for="item in tagsOptions"
+                :key="item.id"
+                :label="item.name"
+                :value="item.id"
+              />
+            </el-drag-select>
+          </div>
+        </div>
         <div class="search">
           <el-button
             v-waves
@@ -97,11 +103,11 @@
         :key="tableKey"
         row-key="date"
         :data="listData"
-        v-loading="listLoading"
+        v-loading="loading.listLoading"
         @sort-change="sortChange"
         style="width: 100%"
       >
-        <el-table-column label="序号" sortable="custom" width="80">
+        <el-table-column label="序号" sortable="custom" width="75px">
           <template slot-scope="{ $index }">
             <span>{{ $index + 1 }}</span>
           </template>
@@ -112,9 +118,15 @@
           </template>
         </el-table-column>
 
-        <el-table-column prop="describe" label="描述" min-width="20">
+        <el-table-column prop="category" label="分类" min-width="20">
           <template slot-scope="{ row }">
-            <span>{{ row.describe }}</span>
+            <span>{{ findNameInCateforyOptions(row.cId) }}</span>
+          </template>
+        </el-table-column>
+
+        <el-table-column prop="des" label="描述" min-width="20">
+          <template slot-scope="{ row }">
+            <span>{{ row.des }}</span>
           </template>
         </el-table-column>
 
@@ -122,24 +134,27 @@
           <template #default="scope">
             <div class="tag-list">
               <el-tag v-for="(item, index) in scope.row.tags" :key="index">{{
-                item
-              }}</el-tag>
-              <el-tag v-for="(item, index) in scope.row.tags" :key="index">{{
-                item
+                item.name
               }}</el-tag>
             </div>
           </template>
         </el-table-column>
 
-        <el-table-column prop="time" label="日期" width="150px">
+        <el-table-column prop="time" label="创建日期" width="93px">
           <template slot-scope="{ row }">
-            <span>{{ row.date }}</span>
+            <span>{{ row.createTime.split(" ")[0] }}</span>
+          </template>
+        </el-table-column>
+
+        <el-table-column prop="time" label="更新日期" width="93px">
+          <template slot-scope="{ row }">
+            <span>{{ row.updateTime.split(" ")[0] }}</span>
           </template>
         </el-table-column>
 
         <el-table-column
           label="操作"
-          width="230"
+          width="150px"
           class-name="small-padding fixed-width"
         >
           <template slot-scope="{ row, $index }">
@@ -147,28 +162,37 @@
               编辑
             </el-button>
             <el-button
-              v-if="row.status != 'published'"
-              size="mini"
-              type="success"
-              @click="handleModifyStatus(row, 'published')"
-            >
-              发布
-            </el-button>
-            <el-button
-              v-if="row.status != 'draft'"
-              size="mini"
-              @click="handleModifyStatus(row, 'draft')"
-            >
-              草稿
-            </el-button>
-            <el-button
-              v-if="row.status != 'deleted'"
+              v-if="!row.deleted"
               size="mini"
               type="danger"
-              @click="handleDelete(row, $index)"
+              @click="handleDelete(row, true, $index)"
             >
               删除
             </el-button>
+            <el-button
+              v-if="row.deleted"
+              size="mini"
+              type="success"
+              @click="handleDelete(row, false, $index)"
+            >
+              恢复
+            </el-button>
+          </template>
+        </el-table-column>
+
+        <el-table-column
+          label="发布"
+          width="67px"
+          class-name="small-padding fixed-width"
+        >
+          <template slot-scope="{ row}">
+            <el-switch
+            @change="handleModifyStatus(row)"
+              v-model="row.published"
+              active-color="#13ce66"
+              inactive-color="#ff4949"
+            >
+            </el-switch>
           </template>
         </el-table-column>
       </el-table>
@@ -178,10 +202,9 @@
       class=""
       @size-change="handleSizeChange"
       @current-change="handleCurrentChange"
-      :page-sizes="[100, 200, 300, 400]"
-      :page-size="100"
+      :page-sizes="[10, 20, 30, 50]"
       layout="total, sizes, prev, pager, next, jumper"
-      :total="400"
+      :total="ListInfo.total"
     >
     </el-pagination>
   </div>
@@ -189,6 +212,8 @@
 
 <script>
 import ElDragSelect from "@/components/DragSelect";
+import {putStatus, getTagList, getCategoryList, getArticleList } from "@/api/article";
+import { dateFormat } from "@/utils/index";
 export default {
   name: "articleList",
   components: {
@@ -196,92 +221,139 @@ export default {
   },
   data() {
     return {
-      categoryOptions: [
-        { id: "1", name: "java" },
-        { id: "2", name: "go" },
-      ],
+      categoryOptions: [],
       tableKey: "0",
-      listLoading: false,
-      listData: [
-        {
-          id: "1",
-          title: "色批是怎样炼成的",
-          date: "2000-7-27 05:12:30",
-          describe: "我家门前有一颗枣树，另一颗还是枣树",
-          tags: ["java", "python", "js", "go"],
-          status: "published",
-        },
-        {
-          id: "1",
-          title: "色批是怎样炼成的2",
-          date: "2000-7-27",
-          describe: "我家门前有一颗枣树，另一颗还是枣树",
-          tags: ["java", "python", "js", "go"],
-          status: "draft",
-        },
-      ],
+      loading: {
+        listLoading: false,
+      },
+      //列表信息
+      ListInfo: {
+        total: 0,
+        page: 1,
+        size: 10,
+      },
+      //列表数据
+      listData: [],
       //筛选条件
       listQuery: {
-        date: null,
-        title: "",
-        tags: ["java"],
-        category: "",
+        createTime: null,
+        title: null,
+        tags: [],
+        categoryId: null,
       },
       //标签值
-      ElDragSelectValue: ["Apple", "Banana", "Orange"],
-      ElDragSelectOptions: [
-        {
-          value: "Apple",
-          label: "Apple",
-        },
-        {
-          value: "Banana",
-          label: "Banana",
-        },
-        {
-          value: "Orange",
-          label: "Orange",
-        },
-        {
-          value: "Pear",
-          label: "Pear",
-        },
-        {
-          value: "Strawberry",
-          label: "Strawberry",
-        },
-      ],
+      tagsOptions: [],
     };
   },
   methods: {
+    init() {
+      this.loading.listLoading = true;
+      this.handleSearch();
+      this.getCategorysA();
+      this.getTagsA();
+    },
+    getTagsA() {
+      getTagList()
+        .then((response) => {
+          const { data } = response;
+          this.tagsOptions = data.tagList;
+        })
+        .catch((error) => {
+          this.$message.error("获取标签失败");
+        });
+    },
+    getCategorysA() {
+      getCategoryList()
+        .then((response) => {
+          const { data } = response;
+          this.categoryOptions = data.categoryList;
+        })
+        .catch((error) => {
+          this.$message.error("获取分类失败");
+        });
+    },
+
+    getArticlesA(query) {
+      getArticleList(query)
+        .then((response) => {
+          const { data } = response;
+          let articleList = data.articleList;
+          this.listData = articleList;
+          this.ListInfo.total = data.total;
+          this.loading.listLoading = false;
+        })
+        .catch((error) => {
+          this.loading.listLoading = false;
+          this.$message.error("获取文章列表失败");
+        });
+    },
     //清空筛选项
     handleReset() {
-      this.listQuery.date = null;
-      this.listQuery.title = "";
-      this.listQuery.category = "";
-      this.listQuery.tags = "";
+      this.listQuery.createTime = null;
+      this.listQuery.title = null;
+      this.listQuery.categoryId = null;
+      this.listQuery.tags = [];
     },
     //搜索按钮
     handleSearch() {
-      debugger;
-      alert(this.listQuery.date);
-      debugger;
-      alert(this.listQuery.date[0].getDate());
-      alert(this.listQuery.date[0].getDay());
-      alert(this.listQuery.date[0].getFullYear());
+      var query = {
+        categoryId: this.listQuery.categoryId,
+        title: this.listQuery.title,
+        createTimeFrom: null,
+        createTimeTo: null,
+        tags: this.listQuery.tags,
+        page: this.ListInfo.page,
+        size: this.ListInfo.size,
+      };
+      let dates = this.listQuery.createTime;
+      // debugger;
+      if (dates && dates.length == 2) {
+        query["createTimeFrom"] = dates[0];
+        query["createTimeTo"] = dates[1];
+      }
+
+      this.getArticlesA(query);
+
+      // alert(this.listQuery.createTime);
     },
     //发布/草稿 状态切换
     handleModifyStatus(row, status) {
-      row.status = status;
+      let article = {
+        published:row.published,
+        id:row.id
+      }
+      putStatus(article)
     },
-    //分页页码变化
-    handleSizeChange(pageSize) {},
+    //分页大小变化
+    handleSizeChange(pageSize) {
+      this.ListInfo.size = pageSize;
+      this.handleSearch();
+    },
     //删除按钮
-    handleDelete(row, index) {},
-    //分页变化
-    handleCurrentChange() {},
+    handleDelete(row, deleted) {
+      let article = {
+        deleted:deleted,
+        id:row.id
+      }
+      putStatus(article)
+        .then((response) => {
+            const { data } = response;
+            row.deleted = data.deleted
+          })
+          .catch((error) => {
+            this.loading.listLoading = false;
+            this.$message.error("文章删除失败");
+          });
+    },
+    //页码变化
+    handleCurrentChange(page) {
+      this.ListInfo.page = page;
+      this.handleSearch();
+    },
     //编辑
-    handleEdit(row) {},
+    handleEdit(row) {
+      this.$router.push({ path: "/article/edit", query: { id: row.id } });
+    },
     //排序触发
     sortChange(data) {
       alert(data);
@@ -290,6 +362,19 @@ export default {
     dateChange(a) {
       alert("我出发啦");
     },
+    findNameInCateforyOptions(cId) {
+      let c_Options = this.categoryOptions;
+      for (var i in c_Options) {
+        if (c_Options[i].id == cId) {
+          return c_Options[i].name;
+        }
+      }
+      return "未知";
+    },
+  },
+  computed: {},
+  created() {
+    this.init();
   },
 };
 </script>
@@ -311,14 +396,13 @@ export default {
     }
 
     .common {
-
       margin-bottom: 20px;
       display: flex;
       flex-direction: row;
       justify-content: space-between;
 
       .input-items {
-        width: 89.5%;
+        width: 86.9%;
         display: flex;
         flex-direction: row;
         justify-content: space-between;
@@ -358,14 +442,37 @@ export default {
       }
     }
 
-    .tags {
-      // width: 90%;
+    .tags-search {
       margin-bottom: 20px;
       display: flex;
       flex-direction: row;
       justify-content: space-between;
-      .drag-select {
-        width: 90% !important;
+      .tags {
+        width: 86.9%;
+        label {
+          text-align: right;
+          vertical-align: middle;
+          float: left;
+          font-size: 14px;
+          color: #606266;
+          line-height: 40px;
+          padding: 0 12px 0 0;
+          box-sizing: border-box !important;
+        }
+        .select {
+          margin-left: 40px;
+          line-height: 40px;
+          position: relative;
+          font-size: 14px;
+          width: 100%;
+        }
+        .drag-select {
+          position: relative;
+          font-size: 14px;
+          display: inline-block;
+          width: 100% !important;
+          line-height: 40px;
+        }
       }
     }
   }

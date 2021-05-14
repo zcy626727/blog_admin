@@ -15,11 +15,7 @@
       <div class="d2">
         <label>类别</label>
         <div class="category">
-          <el-select
-            v-model="articleInfo.category"
-            placeholder="选择类别"
-            clearable
-          >
+          <el-select v-model="articleInfo.cId" placeholder="选择类别" clearable>
             <el-option
               v-for="(item, index) in categoryOptions"
               :key="index"
@@ -40,7 +36,7 @@
       <label>标签</label>
       <div class="select">
         <el-select
-          v-model="articleInfoCategory"
+          v-model="articleInfoTags"
           multiple
           filterable
           allow-create
@@ -67,7 +63,7 @@
           :autosize="{ minRows: 2 }"
           placeholder="描述内容"
           show-word-limit
-          v-model="articleInfo.describe"
+          v-model="articleInfo.des"
         >
         </el-input>
       </div>
@@ -76,7 +72,7 @@
     <div class="markdown">
       <mavon-editor
         :autofocus="false"
-        v-model="articleInfo.markdownValue"
+        v-model="articleInfo.content"
         :toolbars="toolbars"
         @imgAdd="markdownImgAdd"
         @imgDel="markdownImgDel"
@@ -84,13 +80,27 @@
     </div>
 
     <div class="btns">
-      <el-button ref="saveBtn" @click="handleSaveBtn">{{
-        status.saveText
-      }}</el-button>
-      <el-button ref="uploadBtn" @click="handleUpdateBtn">
+      <el-button
+        :type="status.saveTextType"
+        ref="saveBtn"
+        :loading="loading.saveBtn"
+        @click="handleSaveBtn"
+        >{{ status.saveText }}</el-button
+      >
+      <el-button
+        :type="status.uploadTextType"
+        ref="uploadBtn"
+        :loading="loading.uploadBtn"
+        @click="handleUpdateBtn"
+      >
         {{ status.uploadText }}
       </el-button>
-      <el-button ref="publishBtn" @click="handlePublishBtn($event)">
+      <el-button
+        :type="articleInfo.published?'success':'primary'"
+        ref="publishBtn"
+        :loading="loading.publishBtn"
+        @click="handlePublishBtn($event)"
+      >
         {{ status.publishText }}
       </el-button>
     </div>
@@ -118,6 +128,7 @@
       <template #footer>
         <span class="dialog-footer">
           <el-button
+            :loading="loading.confirmBtn"
             ref="confirmBtn"
             type="primary"
             @click="dialogVisible = false"
@@ -130,15 +141,33 @@
 </template>
 
 <script>
+import {
+  putStatus,
+  getArticleById,
+  saveTags,
+  saveArticle,
+  getTagList,
+  getCategoryList,
+} from "@/api/article";
+
 export default {
   name: "articleEdit",
   data() {
     return {
+      loading: {
+        confirmBtn: false,
+        saveBtn: false,
+        uploadBtn: false,
+        publishBtn: false,
+      },
       dialogUploadVisible: false,
       status: {
         saveText: "保存",
+        saveTextType: "primary",
         uploadText: "上传封面",
+        uploadTextType: "primary",
         publishText: "发布",
+
       },
       fileList: [
         // {
@@ -148,13 +177,12 @@ export default {
         // },
       ],
       articleInfo: {
-        markdownValue: "",
-        tagsValue: [
-          
-        ],
-        category: "",
+        content: "",
+        tagsValue: [],
+        cId: "",
         title: "",
-        describe: "",
+        des: "",
+        id: null,
       },
       categoryOptions: [
         { id: "1", name: "java" },
@@ -212,8 +240,115 @@ export default {
     };
   },
   methods: {
-    test() {
-      alert(this.articleInfo.markdownValue);
+    init() {
+      this.getCategorysA();
+      this.getTagsA();
+    },
+    verification() {
+      if (this.articleInfo.title == "") {
+        this.$message.warning("标题为空");
+        return false;
+      }
+
+      if (this.articleInfo.cId == "") {
+        this.$message.warning("请选择分类");
+        return false;
+      }
+
+      if (this.articleInfo.content == "") {
+        this.$message.warning("内容为空");
+        return false;
+      }
+
+      return true;
+    },
+    getCategorysA() {
+      getCategoryList()
+        .then((response) => {
+          const { data } = response;
+          this.categoryOptions = data.categoryList;
+        })
+        .catch((error) => {
+          this.$message.error("获取分类失败");
+        });
+    },
+    getArticleByIdA(id) {
+      getArticleById(id)
+        .then((response) => {
+          const { data } = response;
+          // this.articleInfo = data.article;
+
+          var tags = data.article.tags;
+          var tagRes = [];
+          for (var i in tags) {
+            tagRes.push(tags[i].id);
+          }
+          // debugger
+          this.articleInfo.content = data.article.content;
+          this.articleInfo.cId = data.article.cId;
+          this.articleInfo.title = data.article.title;
+          this.articleInfo.des = data.article.des;
+          debugger;
+          this.articleInfo.id = data.article.id;
+          this.articleInfo.tagsValue = tagRes;
+          this.articleInfo.published = data.article.published;
+          this.articleInfo.deleted = data.article.deleted;
+
+          this.status.saveTextType = "success";
+          this.status.saveText = "更新";
+        })
+        .catch((error) => {
+          this.$message.error("获取文章信息失败");
+        });
+    },
+    getTagsA() {
+      getTagList()
+        .then((response) => {
+          const { data } = response;
+          // debugger
+          this.tagsOptions = data.tagList;
+        })
+        .catch((error) => {
+          this.$message.error("获取标签失败");
+        });
+    },
+    saveArticleA() {
+      //保存文章信息
+      var tags = this.articleInfo.tagsValue;
+      //封装请求体参数
+      var article = {
+        title: this.articleInfo.title,
+        des: this.articleInfo.des,
+        content: this.articleInfo.content,
+        cid: this.articleInfo.cId,
+        tags: [],
+      };
+
+      for (var i in tags) {
+        article.tags.push({ id: tags[i] });
+      }
+      debugger;
+      if (this.articleInfo.id != null) {
+        article.id = this.articleInfo.id;
+      }
+
+      saveArticle(article)
+        .then((response) => {
+          debugger;
+          const { data } = response;
+          this.articleInfo.id = data.article.id;
+          this.loading.saveBtn = false;
+          this.$message.success("保存文章成功");
+          this.status.saveText = "更新";
+          this.status.saveTextType = "success";
+        })
+        .catch((error) => {
+          debugger;
+          this.loading.saveBtn = false;
+          this.$message.error("保存文章失败");
+          this.status.saveText = "重新保存";
+          this.status.saveTextType = "danger";
+        });
     },
     getOptionByid(id) {
       for (var i in this.tagsOptions) {
@@ -290,44 +425,83 @@ export default {
       this.dialogUploadVisible = false;
     },
     handleSaveBtn(event) {
-      //保存上传的图片
-      debugger;
-      console.log(this.articleInfo);
+      // this.loading.saveBtn = true;
+      this.status.saveText = "正在保存";
+      // debugger
 
-      var target = this.$refs.saveBtn.$el;
+      if (!this.verification()) {
+        this.status.saveText = "保存";
+        this.loading.saveBtn = false;
+        return;
+      }
+      var tags = this.articleInfo.tagsValue;
 
-      target.classList.add("el-button--success");
-      target.classList.remove("el-button--default");
-      this.status.saveText = "更新";
+      var tagNames = [];
+      for (var i = 0; i < tags.length; i++) {
+        if (tags[i].startsWith("+")) {
+          tagNames.push(tags[i].substr(1));
+          this.articleInfo.tagsValue.splice(i, 1);
+          i--;
+        }
+      }
+      //处理标签
+      if (tagNames.length != 0) {
+        //保存标签，并替换当前选中标签的id
+        saveTags(tagNames)
+          .then((response) => {
+            // debugger;
+            this.getTagsA();
+            const { data } = response;
+            var a = this.articleInfo.tagsValue;
+            for (var i in data.tagList) {
+              this.articleInfo.tagsValue.push(data.tagList[i].id);
+            }
+
+            this.saveArticleA();
+          })
+          .catch((error) => {
+            this.loading.saveBtn = false;
+            this.$message.error("保存新标签失败");
+          });
+      } else {
+        this.saveArticleA();
+      }
     },
     handlePublishBtn(event) {
-      var target = this.$refs.publishBtn.$el;
+      this.loading.publishBtn = true;
+      // var target = this.$refs.publishBtn.$el;
       debugger;
-
-      if (this.status.publishText == "已发布") {
-        //发布->草稿
-        target.classList.add("el-button--default");
-        target.classList.remove("el-button--success");
-        this.status.publishText = "发布";
-      } else {
-        //草稿->发布
-        target.classList.add("el-button--success");
-        target.classList.remove("el-button--default");
-        this.status.publishText = "已发布";
-      }
+      let article = {
+        published: !this.articleInfo.published,
+        id: this.articleInfo.id,
+      };
+      putStatus(article).then((response) => {
+        const { data } = response;
+        this.articleInfo.published = data.published;
+        if (this.status.publishText == "已发布") {
+          //发布->草稿
+          this.status.publishText = "发布";
+        } else {
+          //草稿->发布
+          this.status.publishText = "已发布";
+        }
+        this.loading.publishBtn = false;
+      });
     },
   },
   computed: {
-    articleInfoCategory: {
+    articleInfoTags: {
       get() {
+        // debugger
         var temp = [];
-        for (var i in this.articleInfo.tagsValue) {
-          temp.push(this.articleInfo.tagsValue[i]);
+        let tagsValue = this.articleInfo.tagsValue;
+        for (var i in tagsValue) {
+          temp.push(tagsValue[i]);
         }
         return temp;
       },
       set(tagIds) {
-        debugger;
+        // debugger
         var temp = [];
         for (var index in tagIds) {
           var option = this.getOptionByid(tagIds[index]);
@@ -345,6 +519,14 @@ export default {
         this.articleInfo.tagsValue = temp;
       },
     },
+  },
+  created() {
+    this.init();
+    // debugger
+    if (this.$route.query.id) {
+      this.articleInfo.id = this.$route.query.id;
+      this.getArticleByIdA(this.$route.query.id);
+    }
   },
 };
 </script>

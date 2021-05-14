@@ -33,7 +33,6 @@ const actions = {
         const { username, password } = userInfo
         return new Promise((resolve, reject) => {
             login({ username: username.trim(), password: password }).then(response => {
-                debugger
                 const { data } = response
                 commit('SET_TOKEN', data.token)
                 setToken(data.token)
@@ -49,13 +48,12 @@ const actions = {
         return new Promise((resolve, reject) => {
             getInfo(state.token).then(response => {
                 const { userInfo } = response.data
-                debugger
                 if (!userInfo) {
                     return reject('验证失败，请重新登录')
                 }
                 const { nickname, avatar } = userInfo
                 commit('SET_NAME', nickname)
-                    // commit('SET_AVATAR', avatar)
+                commit('SET_AVATAR', 'https://wpimg.wallstcn.com/f778738c-e4f8-4870-b634-56703b4acafe.gif?imageView2/1/w/80/h/80')
                 resolve(userInfo)
             }).catch(error => {
                 reject(error)
