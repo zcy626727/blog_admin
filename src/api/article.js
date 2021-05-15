@@ -24,6 +24,17 @@ export function getCategoryList() {
     })
 }
 
+export function getCategoryListPlus(current, size) {
+    return request({
+        url: '/category/getCategoryListPlus',
+        method: 'get',
+        params: {
+            current,
+            size
+        }
+    })
+}
+
 export function saveArticle(data) {
     return request({
         url: '/article/saveOrUpdate',
@@ -48,9 +59,27 @@ export function saveTags(data) {
     })
 }
 
+export function saveCategory(data) {
+    return request({
+        url: '/category/saveCategory',
+        method: 'post',
+        data
+    })
+}
+
+
+
 export function putStatus(data) {
     return request({
         url: '/article/putStatus',
+        method: 'put',
+        data
+    })
+}
+
+export function updateCategory(data) {
+    return request({
+        url: '/category/updateCategory',
         method: 'put',
         data
     })

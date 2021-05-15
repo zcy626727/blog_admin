@@ -471,6 +471,10 @@ export default {
       this.loading.publishBtn = true;
       // var target = this.$refs.publishBtn.$el;
       debugger;
+      if(!this.verification()){
+        this.loading.publishBtn = false;
+        return false
+      }
       let article = {
         published: !this.articleInfo.published,
         id: this.articleInfo.id,

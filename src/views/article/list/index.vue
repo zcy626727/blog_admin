@@ -107,30 +107,30 @@
         @sort-change="sortChange"
         style="width: 100%"
       >
-        <el-table-column label="序号" sortable="custom" width="75px">
+        <el-table-column align="center" label="序号" sortable="custom" width="75px">
           <template slot-scope="{ $index }">
             <span>{{ $index + 1 }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="title" label="标题" min-width="20">
+        <el-table-column align="center" prop="title" label="标题" min-width="20">
           <template slot-scope="{ row }">
             <span>{{ row.title }}</span>
           </template>
         </el-table-column>
 
-        <el-table-column prop="category" label="分类" min-width="20">
+        <el-table-column align="center" prop="category" label="分类" min-width="20">
           <template slot-scope="{ row }">
             <span>{{ findNameInCateforyOptions(row.cId) }}</span>
           </template>
         </el-table-column>
 
-        <el-table-column prop="des" label="描述" min-width="20">
+        <el-table-column align="center" prop="des" label="描述" min-width="20">
           <template slot-scope="{ row }">
             <span>{{ row.des }}</span>
           </template>
         </el-table-column>
 
-        <el-table-column prop="tags" label="标签" min-width="20">
+        <el-table-column align="center" prop="tags" label="标签" min-width="20">
           <template #default="scope">
             <div class="tag-list">
               <el-tag v-for="(item, index) in scope.row.tags" :key="index">{{
@@ -140,13 +140,13 @@
           </template>
         </el-table-column>
 
-        <el-table-column prop="time" label="创建日期" width="93px">
+        <el-table-column align="center" prop="time" label="创建日期" width="93px">
           <template slot-scope="{ row }">
             <span>{{ row.createTime.split(" ")[0] }}</span>
           </template>
         </el-table-column>
 
-        <el-table-column prop="time" label="更新日期" width="93px">
+        <el-table-column align="center" prop="time" label="更新日期" width="93px">
           <template slot-scope="{ row }">
             <span>{{ row.updateTime.split(" ")[0] }}</span>
           </template>
@@ -155,6 +155,7 @@
         <el-table-column
           label="操作"
           width="150px"
+          align="center"
           class-name="small-padding fixed-width"
         >
           <template slot-scope="{ row, $index }">
@@ -184,6 +185,7 @@
           label="发布"
           width="67px"
           class-name="small-padding fixed-width"
+          align="center"
         >
           <template slot-scope="{ row}">
             <el-switch
