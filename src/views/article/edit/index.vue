@@ -15,7 +15,12 @@
       <div class="d2">
         <label>类别</label>
         <div class="category">
-          <el-select v-model="articleInfo.cId" placeholder="选择类别" clearable>
+          <el-select
+            filterable
+            v-model="articleInfo.cId"
+            placeholder="选择类别"
+            clearable
+          >
             <el-option
               v-for="(item, index) in categoryOptions"
               :key="index"
@@ -96,7 +101,7 @@
         {{ status.uploadText }}
       </el-button>
       <el-button
-        :type="articleInfo.published?'success':'primary'"
+        :type="articleInfo.published ? 'success' : 'primary'"
         ref="publishBtn"
         :loading="loading.publishBtn"
         @click="handlePublishBtn($event)"
@@ -108,40 +113,34 @@
     <el-dialog :visible.sync="dialogUploadVisible" title="上传封面" center>
       <div class="upload">
         <el-upload
-          ref="upload"
+          ref="uploadAvatar"
           :on-remove="handleUploadRemove"
           :on-success="handleUploadSuccess"
           :on-error="handleUploadError"
           :on-progress="handleUploadProgress"
           :on-exceed="handleUploadexceed"
-          :before-upload="handleBeforeUpload"
-          :auto-upload="false"
+          :before-upload="beforeAvatarUpload"
           class="upload-demo"
-          action="#"
+          accept="image/jpeg,image/jpg,image/png"
+          action="http://localhost:8000/article/uploadAvatar"
+          :with-credentials="true"
+          :data="{id:articleInfo.id}"
+          name="avatar"
+          :headers = "articleInfo.avatar.headers"
           :limit="1"
-          :file-list="fileList"
+          :file-list="articleInfo.avatar.fileList"
           list-type="picture-card"
         >
           <i class="el-icon-plus"></i>
         </el-upload>
       </div>
-      <template #footer>
-        <span class="dialog-footer">
-          <el-button
-            :loading="loading.confirmBtn"
-            ref="confirmBtn"
-            type="primary"
-            @click="dialogVisible = false"
-            >点击上传</el-button
-          >
-        </span>
-      </template>
     </el-dialog>
   </div>
 </template>
 
 <script>
 import {
+  removeAvatar,
   putStatus,
   getArticleById,
   saveTags,
@@ -154,6 +153,7 @@ export default {
   name: "articleEdit",
   data() {
     return {
+      
       loading: {
         confirmBtn: false,
         saveBtn: false,
@@ -167,15 +167,7 @@ export default {
         uploadText: "上传封面",
         uploadTextType: "primary",
         publishText: "发布",
-
       },
-      fileList: [
-        // {
-        //   name: "food.jpeg",
-        //   url:
-        //     "https://fuss10.elemecdn.com/3/63/4e7f3a15429bfda99bce42a18cdd1jpeg.jpeg?imageMogr2/thumbnail/360x360/format/webp/quality/100",
-        // },
-      ],
       articleInfo: {
         content: "",
         tagsValue: [],
@@ -183,25 +175,21 @@ export default {
         title: "",
         des: "",
         id: null,
+        avatar: {
+          fileList: [
+            // {
+            //   name: "food.jpeg",
+            //   url:
+            //     "http://192.168.228.1:8000/img/articleAvatar/429b6912-65e1-4d05-b068-3817d3bb068e.jpg",
+            // },
+          ],
+          headers:{
+
+          }
+        },
       },
-      categoryOptions: [
-        { id: "1", name: "java" },
-        { id: "2", name: "go" },
-      ],
-      tagsOptions: [
-        {
-          name: "HTML",
-          id: "id1",
-        },
-        {
-          name: "CSS",
-          id: "id2",
-        },
-        {
-          name: "JavaScript",
-          id: "id3",
-        },
-      ],
+      categoryOptions: [],
+      tagsOptions: [],
       toolbars: {
         bold: true, // 粗体
         italic: true, // 斜体
@@ -269,30 +257,37 @@ export default {
           this.categoryOptions = data.categoryList;
         })
         .catch((error) => {
-          this.$message.error("获取分类失败");
+          this.$message.error(error.message);
         });
     },
     getArticleByIdA(id) {
       getArticleById(id)
         .then((response) => {
-          const { data } = response;
-          // this.articleInfo = data.article;
+          const { article } = response.data;
+          // this.articleInfo = data.article;avatarUrl
 
-          var tags = data.article.tags;
+          var tags = article.tags;
           var tagRes = [];
           for (var i in tags) {
             tagRes.push(tags[i].id);
           }
-          // debugger
-          this.articleInfo.content = data.article.content;
-          this.articleInfo.cId = data.article.cId;
-          this.articleInfo.title = data.article.title;
-          this.articleInfo.des = data.article.des;
-          debugger;
-          this.articleInfo.id = data.article.id;
+          debugger
+          this.articleInfo.content = article.content;
+          this.articleInfo.cId = article.cId;
+          this.articleInfo.title = article.title;
+          this.articleInfo.des = article.des;
+          if(article.avatar!="无" && article.avatar!=null){
+            this.articleInfo.avatar.fileList = [{
+              name:article.avatar,
+              url:article.avatarUrl
+            }]
+            this.status.uploadTextType = "success";
+            this.status.uploadText="更换封面"
+          }
+          this.articleInfo.id = article.id;
           this.articleInfo.tagsValue = tagRes;
-          this.articleInfo.published = data.article.published;
-          this.articleInfo.deleted = data.article.deleted;
+          this.articleInfo.published = article.published;
+          this.articleInfo.deleted = article.deleted;
 
           this.status.saveTextType = "success";
           this.status.saveText = "更新";
@@ -327,14 +322,13 @@ export default {
       for (var i in tags) {
         article.tags.push({ id: tags[i] });
       }
-      debugger;
+      // debugger;
       if (this.articleInfo.id != null) {
         article.id = this.articleInfo.id;
       }
 
       saveArticle(article)
         .then((response) => {
-          debugger;
           const { data } = response;
           this.articleInfo.id = data.article.id;
           this.loading.saveBtn = false;
@@ -343,9 +337,8 @@ export default {
           this.status.saveTextType = "success";
         })
         .catch((error) => {
-          debugger;
           this.loading.saveBtn = false;
-          this.$message.error("保存文章失败");
+          this.$message.error(error.message);
           this.status.saveText = "重新保存";
           this.status.saveTextType = "danger";
         });
@@ -367,67 +360,74 @@ export default {
     },
     handleUploadRemove(file, fileList) {
       debugger;
-      alert("移除");
+      if(!this.articleInfo.id||!this.articleInfo.avatar.fileList[0].name){
+        return
+      }
+      removeAvatar(this.articleInfo.id,this.articleInfo.avatar.fileList[0].name)
+        .then((response) => {
+          const { data } = response;
+          debugger
+          this.$message.success(response.message)
+        })
+        .catch((error) => {
+          this.$message.error(error.message);
+        });
     },
     handleUploadSuccess(response, file, fileList) {
-      alert("上传成功");
+      debugger
+      if(response.code==20000){
+        this.$message.success(response.message)
+        this.articleInfo.avatar.fileList = [{
+          name:response.data.name,
+          url:response.data.url,
+        }]
+        this.status.uploadTextType = "success";
+        this.status.uploadText="更换封面"
+      }else{
+        this.$message.error(response.message)
+        this.articleInfo.avatar.fileList = []
+      }
+      
     },
     handleUploadError(err, file, fileList) {
-      alert("上传失败");
+      this.$message.error(err.message)
+      this.articleInfo.avatar.fileList = []
     },
+    //文件上传中
     handleUploadProgress(event, file, fileList) {
-      alert("文件上传");
     },
     handleUploadexceed(files, fileList) {
       debugger;
-      //files, fileList
-      alert(this.fileList);
-      alert(files);
-    },
-    handleBeforeUpload(file) {
-      const isJPG = file.type === "image/jpeg";
-      const isLt2M = file.size / 1024 / 1024 < 2;
-
-      if (!isJPG) {
-        this.$message.error("上传头像图片只能是 JPG 格式!");
-      }
-      if (!isLt2M) {
-        this.$message.error("上传头像图片大小不能超过 2MB!");
-      }
-      return isJPG && isLt2M;
+      this.$message.error("封面只能上传一个")
     },
     beforeAvatarUpload(file) {
-      const isJPG = file.type === "image/jpeg";
-      const isLt2M = file.size / 1024 / 1024 < 2;
-
-      if (!isJPG) {
-        this.$message.error("上传头像图片只能是 JPG 格式!");
+      if(this.articleInfo.id == null || this.articleInfo.id.length<18){
+        this.$message.error("请先保存再上传封面")
+        return false
       }
+      const isLt2M = file.size / 1024 / 1024 < 3;
       if (!isLt2M) {
-        this.$message.error("上传头像图片大小不能超过 2MB!");
+        this.$message.error("上传封面大小不能超过 3MB!");
       }
-      return isJPG && isLt2M;
+      
+      return isLt2M;
     },
     handleUpdateBtn(event) {
       this.dialogUploadVisible = true;
-      // var target =this.$refs.uploadBtn.$el;
+    },
+    handleConfirmBtn(forName) {
+      this.$refs.uploadAvatar.submit()
+      this.dialogVisible = false
+      //上传成功代码
+      // var target = this.$refs.uploadBtn.$el;
       // target.classList.add("el-button--success");
       // target.classList.remove("el-button--default");
-      // target.innerHTML = "更换封面";
-    },
-    handleConfirmBtn() {
-      // this.$refs.upload.submit();
-      //上传成功代码
-      var target = this.$refs.uploadBtn.$el;
-      target.classList.add("el-button--success");
-      target.classList.remove("el-button--default");
-      this.status.uploadText = "更换封面";
+      // this.status.uploadText = "更换封面";
       this.dialogUploadVisible = false;
     },
     handleSaveBtn(event) {
-      // this.loading.saveBtn = true;
+      this.loading.saveBtn = true;
       this.status.saveText = "正在保存";
-      // debugger
 
       if (!this.verification()) {
         this.status.saveText = "保存";
@@ -471,9 +471,9 @@ export default {
       this.loading.publishBtn = true;
       // var target = this.$refs.publishBtn.$el;
       debugger;
-      if(!this.verification()){
+      if (!this.verification()) {
         this.loading.publishBtn = false;
-        return false
+        return false;
       }
       let article = {
         published: !this.articleInfo.published,

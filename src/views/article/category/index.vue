@@ -28,7 +28,11 @@
 
       <div class="c-edit-item">
         父分类：
-        <el-select v-model="categoryInfo.parent_id" placeholder="请选择父分类">
+        <el-select
+          filterable
+          v-model="categoryInfo.parent_id"
+          placeholder="请选择父分类"
+        >
           <el-option
             v-for="item in categoryList"
             :key="item.id"
@@ -56,7 +60,7 @@
       >
         <el-table-column align="center" label="序号" width="60px">
           <template slot-scope="{ $index }">
-            <span>{{ $index+1 }}</span>
+            <span>{{ $index + 1 }}</span>
           </template>
         </el-table-column>
 
@@ -214,25 +218,25 @@ export default {
     init() {
       this.getCategoryListPlusA();
     },
-    handleCurrentChange(current){
-      this.pageInfo.current = current
-      debugger
-      this.getCategoryListPlusA()
+    handleCurrentChange(current) {
+      this.pageInfo.current = current;
+      debugger;
+      this.getCategoryListPlusA();
     },
-    handleSizeChange(size){
-      debugger
-      this.pageInfo.size = size
-      
-      this.getCategoryListPlusA()
+    handleSizeChange(size) {
+      debugger;
+      this.pageInfo.size = size;
+
+      this.getCategoryListPlusA();
     },
     getCategoryListPlusA() {
       //发送请求获取全部标签 todo
       getCategoryListPlus(this.pageInfo.current, this.pageInfo.size)
         .then((response) => {
           const { data } = response;
-          for(let i in data.categoryList ){
-            data.categoryList[i]['edit'] = false
-            data.categoryList[i]['originalTitle'] = data.categoryList[i].name
+          for (let i in data.categoryList) {
+            data.categoryList[i]["edit"] = false;
+            data.categoryList[i]["originalTitle"] = data.categoryList[i].name;
           }
           this.categoryList = data.categoryList;
           this.pageInfo.total = data.total;
@@ -271,7 +275,7 @@ export default {
         id: row.id,
         started: row.started,
       };
-      debugger
+      debugger;
       updateCategory(categoryOfArticle)
         .then((response) => {
           this.$message.success(response.message);
@@ -280,7 +284,7 @@ export default {
           this.$message.error(error.message);
         });
     },
-    
+
     cancelEdit(row) {
       row.name = row.originalTitle;
       row.edit = false;
@@ -292,16 +296,16 @@ export default {
     confirmEdit(row) {
       row.edit = false;
       let category = {
-        id:row.id,
-        name:row.name
-      }
+        id: row.id,
+        name: row.name,
+      };
       updateCategory(category)
         .then((response) => {
           row.originalTitle = row.name;
-          this.$message.success(response.message)
+          this.$message.success(response.message);
         })
         .catch((error) => {
-          this.$message.error(error.message)
+          this.$message.error(error.message);
         });
     },
     addReset() {

@@ -1,5 +1,6 @@
 import request from '@/utils/request'
 
+//获取标签列表
 export function getTagList() {
     return request({
         url: '/tag/getTagList',
@@ -7,6 +8,7 @@ export function getTagList() {
     })
 }
 
+//根据id获取文章信息
 export function getArticleById(id) {
     return request({
         url: '/article/getArticleById',
@@ -17,13 +19,16 @@ export function getArticleById(id) {
     })
 }
 
-export function getCategoryList() {
+//获取分类列表
+export function getCategoryList(params) {
     return request({
         url: '/category/getCategoryList',
         method: 'get',
+        params
     })
 }
 
+//获取分类列表（分页）
 export function getCategoryListPlus(current, size) {
     return request({
         url: '/category/getCategoryListPlus',
@@ -35,6 +40,7 @@ export function getCategoryListPlus(current, size) {
     })
 }
 
+//保存文章
 export function saveArticle(data) {
     return request({
         url: '/article/saveOrUpdate',
@@ -43,6 +49,7 @@ export function saveArticle(data) {
     })
 }
 
+//获取文章列表
 export function getArticleList(data) {
     return request({
         url: '/article/getArticleList',
@@ -51,6 +58,7 @@ export function getArticleList(data) {
     })
 }
 
+//保存标签
 export function saveTags(data) {
     return request({
         url: '/tag/saveTags',
@@ -59,6 +67,7 @@ export function saveTags(data) {
     })
 }
 
+//保存分类
 export function saveCategory(data) {
     return request({
         url: '/category/saveCategory',
@@ -67,8 +76,7 @@ export function saveCategory(data) {
     })
 }
 
-
-
+//设置文章状态
 export function putStatus(data) {
     return request({
         url: '/article/putStatus',
@@ -77,10 +85,23 @@ export function putStatus(data) {
     })
 }
 
+//更新类别
 export function updateCategory(data) {
     return request({
         url: '/category/updateCategory',
         method: 'put',
         data
+    })
+}
+
+//删除文章封面
+export function removeAvatar(id, name) {
+    return request({
+        url: '/article/removeAvatar',
+        method: 'delete',
+        params: {
+            id,
+            name
+        }
     })
 }

@@ -18,6 +18,7 @@
             <label>类别</label>
             <div class="input-item">
               <el-select
+                filterable
                 v-model="listQuery.categoryId"
                 placeholder="选择类别"
                 clearable
@@ -67,6 +68,7 @@
           <label>标签</label>
           <div class="select">
             <el-drag-select
+              filterable
               class="drag-select"
               v-model="listQuery.tags"
               style="width: 500px"
@@ -107,18 +109,33 @@
         @sort-change="sortChange"
         style="width: 100%"
       >
-        <el-table-column align="center" label="序号" sortable="custom" width="75px">
+        <el-table-column
+          align="center"
+          label="序号"
+          sortable="custom"
+          width="75px"
+        >
           <template slot-scope="{ $index }">
             <span>{{ $index + 1 }}</span>
           </template>
         </el-table-column>
-        <el-table-column align="center" prop="title" label="标题" min-width="20">
+        <el-table-column
+          align="center"
+          prop="title"
+          label="标题"
+          min-width="20"
+        >
           <template slot-scope="{ row }">
             <span>{{ row.title }}</span>
           </template>
         </el-table-column>
 
-        <el-table-column align="center" prop="category" label="分类" min-width="20">
+        <el-table-column
+          align="center"
+          prop="category"
+          label="分类"
+          min-width="20"
+        >
           <template slot-scope="{ row }">
             <span>{{ findNameInCateforyOptions(row.cId) }}</span>
           </template>
@@ -140,13 +157,23 @@
           </template>
         </el-table-column>
 
-        <el-table-column align="center" prop="time" label="创建日期" width="93px">
+        <el-table-column
+          align="center"
+          prop="time"
+          label="创建日期"
+          width="93px"
+        >
           <template slot-scope="{ row }">
             <span>{{ row.createTime.split(" ")[0] }}</span>
           </template>
         </el-table-column>
 
-        <el-table-column align="center" prop="time" label="更新日期" width="93px">
+        <el-table-column
+          align="center"
+          prop="time"
+          label="更新日期"
+          width="93px"
+        >
           <template slot-scope="{ row }">
             <span>{{ row.updateTime.split(" ")[0] }}</span>
           </template>
@@ -187,9 +214,9 @@
           class-name="small-padding fixed-width"
           align="center"
         >
-          <template slot-scope="{ row}">
+          <template slot-scope="{ row }">
             <el-switch
-            @change="handleModifyStatus(row)"
+              @change="handleModifyStatus(row)"
               v-model="row.published"
               active-color="#13ce66"
               inactive-color="#ff4949"
@@ -201,7 +228,6 @@
     </div>
     <el-pagination
       background
-      class=""
       @size-change="handleSizeChange"
       @current-change="handleCurrentChange"
       :page-sizes="[10, 20, 30, 50]"
@@ -214,8 +240,12 @@
 
 <script>
 import ElDragSelect from "@/components/DragSelect";
-import {putStatus, getTagList, getCategoryList, getArticleList } from "@/api/article";
-import { dateFormat } from "@/utils/index";
+import {
+  putStatus,
+  getTagList,
+  getCategoryList,
+  getArticleList,
+} from "@/api/article";
 export default {
   name: "articleList",
   components: {
@@ -261,17 +291,17 @@ export default {
           this.tagsOptions = data.tagList;
         })
         .catch((error) => {
-          this.$message.error("获取标签失败");
+          this.$message.error(error.message);
         });
     },
-    getCategorysA() {
-      getCategoryList()
+    getCategorysA(query) {
+      getCategoryList(query)
         .then((response) => {
           const { data } = response;
           this.categoryOptions = data.categoryList;
         })
         .catch((error) => {
-          this.$message.error("获取分类失败");
+          this.$message.error(error.message);
         });
     },
 
@@ -321,10 +351,10 @@ export default {
     //发布/草稿 状态切换
     handleModifyStatus(row, status) {
       let article = {
-        published:row.published,
-        id:row.id
-      }
-      putStatus(article)
+        published: row.published,
+        id: row.id,
+      };
+      putStatus(article);
     },
     //分页大小变化
     handleSizeChange(pageSize) {
@@ -334,18 +364,18 @@ export default {
     //删除按钮
     handleDelete(row, deleted) {
       let article = {
-        deleted:deleted,
-        id:row.id
-      }
+        deleted: deleted,
+        id: row.id,
+      };
       putStatus(article)
         .then((response) => {
-            const { data } = response;
-            row.deleted = data.deleted
-          })
-          .catch((error) => {
-            this.loading.listLoading = false;
-            this.$message.error("文章删除失败");
-          });
+          const { data } = response;
+          row.deleted = data.deleted;
+        })
+        .catch((error) => {
+          this.loading.listLoading = false;
+          this.$message.error("文章删除失败");
+        });
     },
     //页码变化
     handleCurrentChange(page) {
