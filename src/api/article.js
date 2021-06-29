@@ -105,3 +105,30 @@ export function removeAvatar(id, name) {
         }
     })
 }
+
+//删除文章插图
+export function removeIllustration(id, name) {
+    return request({
+        url: '/article/removeIllustration',
+        method: 'delete',
+        params: {
+            id,
+            name
+        }
+    })
+}
+
+//上传文章封面
+export function uploadIllustration(formdata) {
+    return request({
+        url: '/article/uploadIllustration',
+        method: 'post',
+        data: {
+            formdata
+        },
+        headers: { 'Content-Type': 'multipart/form-data;charse=UTF-8' },
+        transformRequest: [function() {
+            return formdata;
+        }],
+    })
+}

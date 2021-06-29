@@ -1,4 +1,5 @@
 <template>
+<el-scrollbar>
   <div class="edit-body">
     <div class="editer-info">
       <div class="d1">
@@ -77,6 +78,7 @@
     <div class="markdown">
       <mavon-editor
         :autofocus="false"
+        ref="md"
         v-model="articleInfo.content"
         :toolbars="toolbars"
         @imgAdd="markdownImgAdd"
@@ -96,7 +98,7 @@
         :type="status.uploadTextType"
         ref="uploadBtn"
         :loading="loading.uploadBtn"
-        @click="handleUpdateBtn"
+        @click="handleUploadBtn"
       >
         {{ status.uploadText }}
       </el-button>
@@ -124,9 +126,9 @@
           accept="image/jpeg,image/jpg,image/png"
           action="http://localhost:8000/article/uploadAvatar"
           :with-credentials="true"
-          :data="{id:articleInfo.id}"
+          :data="{ id: articleInfo.id }"
           name="avatar"
-          :headers = "articleInfo.avatar.headers"
+          :headers="articleInfo.avatar.headers"
           :limit="1"
           :file-list="articleInfo.avatar.fileList"
           list-type="picture-card"
@@ -136,10 +138,14 @@
       </div>
     </el-dialog>
   </div>
+</el-scrollbar>
+  
 </template>
 
 <script>
 import {
+  uploadIllustration,
+  removeIllustration,
   removeAvatar,
   putStatus,
   getArticleById,
@@ -153,7 +159,7 @@ export default {
   name: "articleEdit",
   data() {
     return {
-      
+      img_file: {},
       loading: {
         confirmBtn: false,
         saveBtn: false,
@@ -176,16 +182,8 @@ export default {
         des: "",
         id: null,
         avatar: {
-          fileList: [
-            // {
-            //   name: "food.jpeg",
-            //   url:
-            //     "http://192.168.228.1:8000/img/articleAvatar/429b6912-65e1-4d05-b068-3817d3bb068e.jpg",
-            // },
-          ],
-          headers:{
-
-          }
+          fileList: [],
+          headers: {},
         },
       },
       categoryOptions: [],
@@ -271,18 +269,20 @@ export default {
           for (var i in tags) {
             tagRes.push(tags[i].id);
           }
-          debugger
+
           this.articleInfo.content = article.content;
           this.articleInfo.cId = article.cId;
           this.articleInfo.title = article.title;
           this.articleInfo.des = article.des;
-          if(article.avatar!="无" && article.avatar!=null){
-            this.articleInfo.avatar.fileList = [{
-              name:article.avatar,
-              url:article.avatarUrl
-            }]
+          if (article.avatar != "无" && article.avatar != null) {
+            this.articleInfo.avatar.fileList = [
+              {
+                name: article.avatar,
+                url: article.avatarUrl,
+              },
+            ];
             this.status.uploadTextType = "success";
-            this.status.uploadText="更换封面"
+            this.status.uploadText = "更换封面";
           }
           this.articleInfo.id = article.id;
           this.articleInfo.tagsValue = tagRes;
@@ -300,14 +300,14 @@ export default {
       getTagList()
         .then((response) => {
           const { data } = response;
-          // debugger
+
           this.tagsOptions = data.tagList;
         })
         .catch((error) => {
           this.$message.error("获取标签失败");
         });
     },
-    saveArticleA() {
+    saveArticleA(condition) {
       //保存文章信息
       var tags = this.articleInfo.tagsValue;
       //封装请求体参数
@@ -319,10 +319,14 @@ export default {
         tags: [],
       };
 
-      for (var i in tags) {
+      for (let k in condition) {
+        article[k] = condition[k];
+      }
+
+      for (let i in tags) {
         article.tags.push({ id: tags[i] });
       }
-      // debugger;
+
       if (this.articleInfo.id != null) {
         article.id = this.articleInfo.id;
       }
@@ -353,76 +357,115 @@ export default {
       return null;
     },
     markdownImgAdd(pos, $file) {
-      alert("markdown图片添加" + pos);
-    },
-    markdownImgDel(pos, $file) {
-      alert("markdown图片删除" + pos);
-    },
-    handleUploadRemove(file, fileList) {
-      debugger;
-      if(!this.articleInfo.id||!this.articleInfo.avatar.fileList[0].name){
-        return
+      if (!this.articleInfo.id) {
+        this.$message.warning("请先保存文章")
+        //从md中删除图片
+        this.$refs.md.$refs.toolbar_left.$imgDelByFilename($file._name)
+        this.$refs.md
+        return;
       }
-      removeAvatar(this.articleInfo.id,this.articleInfo.avatar.fileList[0].name)
+      // 缓存图片信息
+      this.img_file[pos] = $file;
+      //第一步.将图片上传到服务器.
+      let formdata = new window.FormData();
+      formdata.append("id", this.articleInfo.id);
+      formdata.append("picture", $file);
+
+      uploadIllustration(formdata)
         .then((response) => {
           const { data } = response;
-          debugger
-          this.$message.success(response.message)
+          this.$refs.md.$img2Url(pos, data.url);
+          this.saveArticleA();
+          this.$message.success(response.message);
+        })
+        .catch((error) => {
+          this.$message.error(error.message);
+        });
+    },
+    markdownImgDel(pos) {
+      if(!this.articleInfo.id){
+        this.$message.warning("请先保存文章")
+        return
+      }
+      delete this.img_file[pos];
+
+      let name = pos[0].substring(pos[0].lastIndexOf("/") + 1);
+      removeIllustration(this.articleInfo.id, name)
+        .then((response) => {
+          const { data } = response;
+
+          this.$message.success(response.message);
+          // this.$refs.md.$img2Url(pos, data.url);
+        })
+        .catch((error) => {
+
+          this.$message.error(error.message);
+        });
+      return false;
+    },
+    handleUploadRemove(file, fileList) {
+
+      if (!this.articleInfo.id || !this.articleInfo.avatar.fileList[0].name) {
+        return;
+      }
+      removeAvatar(
+        this.articleInfo.id,
+        this.articleInfo.avatar.fileList[0].name
+      )
+        .then((response) => {
+          const { data } = response;
+
+          this.$message.success(response.message);
         })
         .catch((error) => {
           this.$message.error(error.message);
         });
     },
     handleUploadSuccess(response, file, fileList) {
-      debugger
-      if(response.code==20000){
-        this.$message.success(response.message)
-        this.articleInfo.avatar.fileList = [{
-          name:response.data.name,
-          url:response.data.url,
-        }]
+
+      if (response.code == 20000) {
+        this.$message.success(response.message);
+        this.articleInfo.avatar.fileList = [
+          {
+            name: response.data.name,
+            url: response.data.url,
+          },
+        ];
         this.status.uploadTextType = "success";
-        this.status.uploadText="更换封面"
-      }else{
-        this.$message.error(response.message)
-        this.articleInfo.avatar.fileList = []
+        this.status.uploadText = "更换封面";
+      } else {
+        this.$message.error(response.message);
+        this.articleInfo.avatar.fileList = [];
       }
-      
     },
     handleUploadError(err, file, fileList) {
-      this.$message.error(err.message)
-      this.articleInfo.avatar.fileList = []
+      this.$message.error(err.message);
+      this.articleInfo.avatar.fileList = [];
     },
     //文件上传中
-    handleUploadProgress(event, file, fileList) {
-    },
+    handleUploadProgress(event, file, fileList) {},
     handleUploadexceed(files, fileList) {
-      debugger;
-      this.$message.error("封面只能上传一个")
+
+      this.$message.error("封面只能上传一个");
     },
     beforeAvatarUpload(file) {
-      if(this.articleInfo.id == null || this.articleInfo.id.length<18){
-        this.$message.error("请先保存再上传封面")
-        return false
+      if (this.articleInfo.id == null || this.articleInfo.id.length < 18) {
+        this.$message.error("请先保存再上传封面");
+        return false;
       }
       const isLt2M = file.size / 1024 / 1024 < 3;
       if (!isLt2M) {
         this.$message.error("上传封面大小不能超过 3MB!");
       }
-      
+
       return isLt2M;
     },
-    handleUpdateBtn(event) {
+    handleUploadBtn(event) {
       this.dialogUploadVisible = true;
     },
     handleConfirmBtn(forName) {
-      this.$refs.uploadAvatar.submit()
-      this.dialogVisible = false
-      //上传成功代码
-      // var target = this.$refs.uploadBtn.$el;
-      // target.classList.add("el-button--success");
-      // target.classList.remove("el-button--default");
-      // this.status.uploadText = "更换封面";
+      this.$refs.uploadAvatar.submit();
+      this.dialogVisible = false;
       this.dialogUploadVisible = false;
     },
     handleSaveBtn(event) {
@@ -434,6 +477,7 @@ export default {
         this.loading.saveBtn = false;
         return;
       }
+
       var tags = this.articleInfo.tagsValue;
 
       var tagNames = [];
@@ -449,7 +493,7 @@ export default {
         //保存标签，并替换当前选中标签的id
         saveTags(tagNames)
           .then((response) => {
-            // debugger;
+
             this.getTagsA();
             const { data } = response;
             var a = this.articleInfo.tagsValue;
@@ -470,7 +514,7 @@ export default {
     handlePublishBtn(event) {
       this.loading.publishBtn = true;
       // var target = this.$refs.publishBtn.$el;
-      debugger;
+
       if (!this.verification()) {
         this.loading.publishBtn = false;
         return false;
@@ -496,7 +540,7 @@ export default {
   computed: {
     articleInfoTags: {
       get() {
-        // debugger
+
         var temp = [];
         let tagsValue = this.articleInfo.tagsValue;
         for (var i in tagsValue) {
@@ -505,7 +549,7 @@ export default {
         return temp;
       },
       set(tagIds) {
-        // debugger
+
         var temp = [];
         for (var index in tagIds) {
           var option = this.getOptionByid(tagIds[index]);
@@ -526,7 +570,7 @@ export default {
   },
   created() {
     this.init();
-    // debugger
+
     if (this.$route.query.id) {
       this.articleInfo.id = this.$route.query.id;
       this.getArticleByIdA(this.$route.query.id);
@@ -537,6 +581,7 @@ export default {
 
 <style lang="scss" scoped>
 .edit-body {
+  min-width: 880px;
   margin: 20px;
   display: flex;
   flex-direction: column;
@@ -585,6 +630,13 @@ export default {
 
   .markdown {
     margin-bottom: 40px;
+
+    .v-note-wrapper {
+      max-height: 630px;
+    }
+    .fullscreen {
+      max-height: 100% !important;
+    }
   }
 
   .tags {

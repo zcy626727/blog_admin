@@ -1,4 +1,5 @@
 <template>
+<el-scrollbar>
   <div class="category">
     <div class="c-edit">
       <div class="c-edit-item">
@@ -169,6 +170,8 @@
     >
     </el-pagination>
   </div>
+  </el-scrollbar>
+  
 </template>
 
 <script>
@@ -341,6 +344,7 @@ export default {
 
 <style lang="scss" scoped>
 .category {
+  min-width: 1200px;
   margin: 20px;
   .c-edit {
     text-align: center;

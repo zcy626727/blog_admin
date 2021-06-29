@@ -1,4 +1,5 @@
 <template>
+<el-scrollbar>
   <div class="container">
     <div class="filter">
       <div class="common">
@@ -236,6 +237,8 @@
     >
     </el-pagination>
   </div>
+</el-scrollbar>
+  
 </template>
 
 <script>
@@ -337,16 +340,14 @@ export default {
         page: this.ListInfo.page,
         size: this.ListInfo.size,
       };
+      debugger
       let dates = this.listQuery.createTime;
-      // debugger;
       if (dates && dates.length == 2) {
         query["createTimeFrom"] = dates[0];
         query["createTimeTo"] = dates[1];
       }
 
       this.getArticlesA(query);
-
-      // alert(this.listQuery.createTime);
     },
     //发布/草稿 状态切换
     handleModifyStatus(row, status) {
@@ -413,6 +414,7 @@ export default {
 
 <style lang="scss" scoped>
 .container {
+  min-width: 880px;
   margin: 20px;
   .filter {
     display: flex;
