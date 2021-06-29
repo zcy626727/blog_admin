@@ -1,6 +1,5 @@
 # 博客后台管理
 
-English | [简体中文](./README-zh.md)
 
 ```bash
 # clone the project
