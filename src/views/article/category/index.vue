@@ -246,7 +246,7 @@ export default {
                 })
                 .catch((error) => {
                   this.loading.listLoading = false;
-                  this.$message.error(data.msg);
+                  this.$message.error(error.msg);
                 });
           })
     },
