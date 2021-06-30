@@ -32,7 +32,7 @@
         <el-select
           filterable
           v-model="categoryInfo.parent_id"
-          placeholder="请选择父分类"
+          placeholder="请选择父分类(可选)"
         >
           <el-option
             v-for="item in categoryList"
@@ -134,7 +134,7 @@
               type="danger"
               size="small"
               icon="el-icon-delete"
-              @click="row.edit = !row.edit"
+              @click="deleteCategoryHandler(row.id,row.name)"
             >
               删除
             </el-button>
@@ -179,6 +179,7 @@ import {
   updateCategory,
   saveCategory,
   getCategoryListPlus,
+  deleteCategory,
 } from "@/api/article";
 export default {
   name: "tags-manage",
@@ -232,7 +233,25 @@ export default {
 
       this.getCategoryListPlusA();
     },
+    deleteCategoryHandler(id,name){
+      this.$confirm('是否删除：'+name)
+          .then(() => {
+            this.loading.listLoading = true
+            deleteCategory(id)
+                .then((response) => {
+                  const { data } = response;
+                  this.$message.success(response.message)
+                  this.loading.listLoading = false;
+                  this.getCategoryListPlusA()
+                })
+                .catch((error) => {
+                  this.loading.listLoading = false;
+                  this.$message.error(data.msg);
+                });
+          })
+    },
     getCategoryListPlusA() {
+      this.loading.listLoading = true
       //发送请求获取全部标签 todo
       getCategoryListPlus(this.pageInfo.current, this.pageInfo.size)
         .then((response) => {

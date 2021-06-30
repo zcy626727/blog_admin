@@ -94,6 +94,17 @@ export function updateCategory(data) {
     })
 }
 
+//删除类别
+export function deleteCategory(id) {
+    return request({
+        url: '/category/deleteCategory',
+        method: 'delete',
+        params: {
+            id
+        }
+    })
+}
+
 //删除文章封面
 export function removeAvatar(id, name) {
     return request({
