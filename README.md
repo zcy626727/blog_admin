@@ -1,12 +1,12 @@
 # 博客后台管理
-使用vue-element-admin作为后台管理界面，支持markdown格式编辑文章
+大二时期学习springboot时的练手项目，使用vue-element-admin作为后台管理界面，支持markdown格式编辑文章
 
 ## 项目启动
 ```bash
-# install dependency
+# 下载依赖
 npm install
 
-# develop
+# 启动
 npm run dev
 ```
 
