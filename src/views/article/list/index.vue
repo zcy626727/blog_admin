@@ -58,9 +58,10 @@
         </div>
 
         <div class="reset">
-          <el-button icon="el-icon-refresh" type="primary" @click="handleReset"
-            >重置</el-button
+          <el-button type="primary" @click="handleReset"
+            >重置<i class="el-icon-refresh el-icon--right"></i></el-button
           >
+          
         </div>
       </div>
 
@@ -90,11 +91,11 @@
             v-waves
             class="filter-item"
             type="primary"
-            icon="el-icon-search"
             @click="handleSearch"
           >
-            搜索
+            搜索<i class="el-icon-search el-icon--right"></i>
           </el-button>
+
         </div>
       </div>
     </div>
@@ -332,15 +333,15 @@ export default {
     //搜索按钮
     handleSearch() {
       var query = {
-        categoryId: this.listQuery.categoryId,
+        categoryId: this.listQuery.categoryId==''?null:this.listQuery.categoryId,
         title: this.listQuery.title,
         createTimeFrom: null,
         createTimeTo: null,
         tags: this.listQuery.tags,
         page: this.ListInfo.page,
         size: this.ListInfo.size,
+        order:'update_time'
       };
-      debugger
       let dates = this.listQuery.createTime;
       if (dates && dates.length == 2) {
         query["createTimeFrom"] = dates[0];
@@ -389,7 +390,7 @@ export default {
     },
     //排序触发
     sortChange(data) {
-      alert(data);
+      this.listData.reverse()
     },
     //日期
     dateChange(a) {

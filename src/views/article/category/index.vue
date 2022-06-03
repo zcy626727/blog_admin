@@ -224,11 +224,11 @@ export default {
     },
     handleCurrentChange(current) {
       this.pageInfo.current = current;
-      debugger;
+      
       this.getCategoryListPlusA();
     },
     handleSizeChange(size) {
-      debugger;
+      
       this.pageInfo.size = size;
 
       this.getCategoryListPlusA();
@@ -297,7 +297,7 @@ export default {
         id: row.id,
         started: row.started,
       };
-      debugger;
+     
       updateCategory(categoryOfArticle)
         .then((response) => {
           this.$message.success(response.message);

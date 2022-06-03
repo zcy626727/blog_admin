@@ -60,7 +60,7 @@ export const constantRoutes = [{
     {
         path: '/article',
         component: Layout,
-        redirect: '/article/menu1',
+        redirect: '/article/list',
         name: 'Article',
         meta: {
             title: '博客管理',
@@ -90,9 +90,6 @@ export const constantRoutes = [{
             }
         ]
     },
-
-
-
 
     // 404 page must be placed at the end !!!
     { path: '*', redirect: '/404', hidden: true }

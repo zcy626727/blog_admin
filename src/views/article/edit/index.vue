@@ -281,6 +281,9 @@ export default {
                 url: article.avatarUrl,
               },
             ];
+            if(this.$route.query.id){
+              this.status.publishText = "已发布";
+            }
             this.status.uploadTextType = "success";
             this.status.uploadText = "更换封面";
           }
@@ -581,7 +584,7 @@ export default {
 
 <style lang="scss" scoped>
 .edit-body {
-  min-width: 880px;
+  min-width: 1300px;
   margin: 20px;
   display: flex;
   flex-direction: column;
@@ -657,14 +660,13 @@ export default {
       line-height: 40px;
       position: relative;
       font-size: 14px;
-      width: 99.5%;
     }
 
     .el-select {
       position: relative;
       font-size: 14px;
       display: inline-block;
-      width: 97.5%;
+      width: 100%;
       line-height: 40px;
     }
   }
